@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Budget App</title>
+</head>
+<body>
+    <h3>Welcome to your personal budget app</h3>
+
+    <p>Choose an option:</p>
+    <button onclick="startSession(1)">1. Focus on budget</button>
+    <button onclick="startSession(2)">2. Provide suggestions</button>
+
+    <p id="session"></p>
+
+    <textarea id="msg" placeholder="Type message..."></textarea>
+    <br>
+    <button onclick="sendMsg()">Send</button>
+
+    <pre id="output"></pre>
+
+    <script>
+        let session_id = null;
+
+        async function startSession(choice) {
+            const r = await fetch("/start", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ choice })
+            });
+            const data = await r.json();
+            session_id = data.session_id;
+            document.getElementById("session").textContent = "Session ID: " + session_id;
+        }
+
+        async function sendMsg() {
+            const msg = document.getElementById("msg").value;
+
+            const r = await fetch("/message", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    session_id,
+                    message: msg
+                })
+            });
+
+            const data = await r.json();
+            document.getElementById("output").textContent += 
+                "\nYou: " + msg + "\nAI: " + data.response + "\n";
+        }
+    </script>
+</body>
+</html>
