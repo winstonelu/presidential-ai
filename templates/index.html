@@ -1,53 +1,200 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Budget App</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Personal Budget App</title>
+
+    <style>
+        :root {
+            --bg: #dbeafe;
+            --card-bg: #ffffff;
+            --primary: #1e3a8a;
+            --primary-dark: #162d6c;
+            --accent: #0ea5e9;
+            --text-main: #1f2937;
+            --text-soft: #6b7280;
+            --radius: 14px;
+            --shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 30px;
+            color: var(--text-main);
+        }
+        .container {
+            max-width: 650px;
+            margin: auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.5s ease;
+        }
+        h2 {
+            text-align: center;
+            color: var(--text-main);
+            font-weight: 700;
+        }
+        p {
+            color: var(--text-soft);
+            line-height: 1.6;
+        }
+        form {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        input[type="text"] {
+            padding: 12px;
+            border: 1px solid #d7d9df;
+            border-radius: var(--radius);
+            font-size: 15px;
+            transition: 0.2s;
+        }
+        input[type="text"]:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 91, 219, 0.15);
+        }
+        button {
+            padding: 12px 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.25s;
+        }
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 91, 219, 0.25);
+        }
+        .chat-box {
+            background: #f9fafc;
+            padding: 18px;
+            border-radius: var(--radius);
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e4e6eb;
+        }
+        .msg {
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ececec;
+        }
+        .msg strong {
+            color: var(--primary-dark);
+        }
+        .end-section {
+            margin-top: 20px;
+            padding: 25px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
-    <h3>Welcome to your personal budget app</h3>
 
-    <p>Choose an option:</p>
-    <button onclick="startSession(1)">1. Focus on budget</button>
-    <button onclick="startSession(2)">2. Provide suggestions</button>
+<!-- START PAGE -->
+<div class="container">
+    <h2>Welcome to your personal budget app</h2>
+    <p>This app will help you make smart financial decisions.</p>
 
-    <p id="session"></p>
+    <form id="startForm">
+        <p>1. Focus on budget<br>2. Provide suggestions</p>
+        <input type="text" name="choice" id="choiceInput" placeholder="Enter 1 or 2" required>
+        <button type="submit">Start</button>
+    </form>
+</div>
 
-    <textarea id="msg" placeholder="Type message..."></textarea>
-    <br>
-    <button onclick="sendMsg()">Send</button>
+<script>
+    document.getElementById('startForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    <pre id="output"></pre>
+        const choice = document.getElementById('choiceInput').value;
 
-    <script>
-        let session_id = null;
+        const res = await fetch('/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ choice: parseInt(choice) })
+        });
 
-        async function startSession(choice) {
-            const r = await fetch("/start", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ choice })
-            });
-            const data = await r.json();
-            session_id = data.session_id;
-            document.getElementById("session").textContent = "Session ID: " + session_id;
+        const data = await res.json();
+
+        if (data.session_id) {
+            window.location.href = `/chat`;
         }
+    });
+</script>
 
-        async function sendMsg() {
-            const msg = document.getElementById("msg").value;
+<!-- CHAT PAGE -->
+{% if chat is defined %}
+<div class="container">
+    <h2>Chat</h2>
 
-            const r = await fetch("/message", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    session_id,
-                    message: msg
-                })
-            });
+    <p>Enter a response, or type "STOP" to end this conversation.</p>
 
-            const data = await r.json();
-            document.getElementById("output").textContent += 
-                "\nYou: " + msg + "\nAI: " + data.response + "\n";
-        }
-    </script>
+    <form id="chatForm">
+        <input type="text" id="chatInput" name="message" required>
+        <button type="submit">Send</button>
+    </form>
+
+    <h3>Conversation</h3>
+
+    <div class="chat-box" id="chatHistory">
+        {% for msg in chat %}
+        <p class="msg"><strong>{{ msg.role }}:</strong> {{ msg.content }}</p>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+document.getElementById("chatForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const userMessage = document.getElementById("chatInput").value;
+    document.getElementById("chatInput").value = "";
+
+    const res = await fetch("/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage })
+    });
+
+    const data = await res.json();
+
+    const box = document.getElementById("chatHistory");
+    box.innerHTML += `<p class="msg"><strong>You:</strong> ${userMessage}</p>`;
+
+    if (data.response) {
+        box.innerHTML += `<p class="msg"><strong>Assistant:</strong> ${data.response}</p>`;
+    }
+
+    box.scrollTop = box.scrollHeight;
+});
+</script>
+{% endif %}
+
 </body>
 </html>

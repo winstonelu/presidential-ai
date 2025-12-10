@@ -3,7 +3,7 @@ from openai import OpenAI
 
 app = Flask(__name__)
 
-client = OpenAI()
+client = OpenAI(api_key="")
 
 system_prompt_base = """You are a really educated bot that take in the users income and saving goals, in order to use those informations you will ask the user their plan and goals.With the income and the users goal budget/what they will be saving up for you will make a plan for user preferences, even with the customized plan you should ask the user additional information. 
 
@@ -12,8 +12,11 @@ The format of this plan should be casual so you dont freak out the user, it shou
 the people who will be interacting with the ai will be people who need to keep track of their money and need to be smart in their budget and dont know how to use money wiseley. these people would include children elderly and young adults.
 """
 
-# Store sessions in memory (temporary)
-sessions = {}
+# One global chat history
+chat_history = [
+    {"role": "system", "content": system_prompt_base}
+]
+
 
 @app.route("/")
 def index():
@@ -22,39 +25,39 @@ def index():
 
 @app.route("/start", methods=["POST"])
 def start():
+    global chat_history
+
     user_choice = request.json.get("choice")
 
-    # Create session
-    session_id = str(len(sessions) + 1)
+    # reset
+    chat_history = [{"role": "system", "content": system_prompt_base}]
 
-    # Copy base prompt
-    system_prompt = system_prompt_base
-
-    # Apply user choice (same logic as original code)
     if user_choice == 1:
-        system_prompt += "\n The user wants a budget. Please provide step by step with an actual plan."
+        chat_history[0]["content"] += "\nThe user wants a budget. Provide step-by-step plan."
     elif user_choice == 2:
-        system_prompt += "\n The user just want suggestions"
+        chat_history[0]["content"] += "\nThe user wants suggestions."
 
-    chat_history = [
-        {"role": "system", "content": system_prompt}
-    ]
+    return jsonify({"session_id": "static"})
 
-    sessions[session_id] = chat_history
-    return jsonify({"session_id": session_id})
+
+@app.route("/chat")
+def chat_page():
+    # page displays chat and input
+    return render_template(
+        "index.html",
+        chat=chat_history,
+        assistant_response=None,
+        first=False,
+        history=[]
+    )
 
 
 @app.route("/message", methods=["POST"])
 def message():
-    session_id = request.json.get("session_id")
+    global chat_history
+
     user_prompt = request.json.get("message")
 
-    if session_id not in sessions:
-        return jsonify({"error": "Invalid session"}), 400
-
-    chat_history = sessions[session_id]
-
-    # Stop condition (same logic as original code)
     if user_prompt == "STOP":
         return jsonify({"history": chat_history})
 
@@ -73,4 +76,4 @@ def message():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=80)
