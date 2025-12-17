@@ -12,207 +12,140 @@
     --card-bg: #ffffff;
     --primary: #1e3a8a;
     --primary-dark: #162d6c;
-    --accent: #0ea5e9;
     --text-main: #1f2937;
     --text-soft: #6b7280;
     --radius: 14px;
-    --shadow: 0 10px 25px rgba(0,0,0,0.08);
+    --shadow: 0 8px 20px rgba(0,0,0,0.07);
 }
-* { box-sizing: border-box; }
 body {
-    font-family: Inter, system-ui, sans-serif;
+    font-family: Inter, sans-serif;
     background: var(--bg);
     margin: 0;
-    padding: 24px;
-    color: var(--text-main);
+    padding: 30px;
 }
 .container {
-    max-width: 700px;
+    max-width: 650px;
     margin: auto;
     background: var(--card-bg);
-    padding: 28px;
+    padding: 30px;
     border-radius: var(--radius);
     box-shadow: var(--shadow);
 }
-h2 { text-align: center; margin-top: 0; }
-.subtitle { text-align: center; color: var(--text-soft); }
-
-.choice-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-top: 20px;
+h2 {
+    text-align: center;
 }
-.choice {
-    border: 2px solid #e5e7eb;
-    border-radius: var(--radius);
-    padding: 18px;
-    cursor: pointer;
-    transition: .2s;
+p {
+    color: var(--text-soft);
 }
-.choice:hover {
-    border-color: var(--primary);
-    background: #f0f6ff;
-}
-.choice.active {
-    border-color: var(--primary);
-    background: #eaf2ff;
-}
-.choice h4 { margin: 0 0 6px; }
-
-button {
+input {
     width: 100%;
-    margin-top: 20px;
-    padding: 14px;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: var(--radius);
+    border: 1px solid #d7d9df;
+    font-size: 15px;
+}
+button {
+    margin-top: 12px;
+    padding: 12px;
+    width: 100%;
     background: var(--primary);
     color: white;
     border: none;
     border-radius: var(--radius);
     font-size: 16px;
-    font-weight: 600;
     cursor: pointer;
 }
-button:hover { background: var(--primary-dark); }
-
+button:hover {
+    background: var(--primary-dark);
+}
 .chat-box {
     margin-top: 20px;
-    padding: 16px;
-    border-radius: var(--radius);
     background: #f9fafc;
-    max-height: 380px;
+    padding: 15px;
+    border-radius: var(--radius);
+    max-height: 320px;
     overflow-y: auto;
     border: 1px solid #e5e7eb;
 }
 .msg {
-    margin-bottom: 14px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e5e7eb;
 }
-.msg.user strong { color: var(--primary); }
-.msg.assistant strong { color: var(--accent); }
-
-.chat-input {
-    display: flex;
-    gap: 10px;
-    margin-top: 14px;
-}
-.chat-input input {
-    flex: 1;
-    padding: 14px;
-    border-radius: var(--radius);
-    border: 1px solid #d1d5db;
-    font-size: 15px;
-}
-.chat-input input:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(30,58,138,.15);
-}
-.chat-input button {
-    width: 120px;
-    margin-top: 0;
-}
-
-.fade { animation: fade .4s ease; }
-@keyframes fade {
-    from { opacity:0; transform:translateY(8px);}
-    to { opacity:1; transform:none;}
+.msg strong {
+    color: var(--primary);
 }
 </style>
 </head>
 
 <body>
 
-{% if chat is not defined %}
-<div class="container fade">
+{% if chat is none %}
+<div class="container">
     <h2>Personal Budget Assistant</h2>
-    <p class="subtitle">Pick how you want help today</p>
-
-    <div class="choice-grid">
-        <div class="choice" data-value="1">
-            <h4>Build a Budget</h4>
-            <p>Create a clear spending & saving plan</p>
-        </div>
-        <div class="choice" data-value="2">
-            <h4>Get Suggestions</h4>
-            <p>Improve money habits & reduce waste</p>
-        </div>
-    </div>
-
-    <button id="startBtn" disabled>Continue</button>
+    <p>
+        This tool helps you understand your money clearly.
+        You will type your income, expenses, and savings goal in one message.
+    </p>
+    <button id="startBtn">Start</button>
 </div>
 
 <script>
-let selected = null;
-document.querySelectorAll(".choice").forEach(c => {
-    c.onclick = () => {
-        document.querySelectorAll(".choice").forEach(x=>x.classList.remove("active"));
-        c.classList.add("active");
-        selected = c.dataset.value;
-        document.getElementById("startBtn").disabled = false;
-    };
-});
-
 document.getElementById("startBtn").onclick = async () => {
-    const res = await fetch("/start", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ choice: Number(selected) })
-    });
-    const data = await res.json();
-    if(data.session_id) window.location.href="/chat";
+    await fetch("/start", { method: "POST" });
+    window.location.href = "/chat";
 };
 </script>
-{% endif %}
 
-{% if chat is defined %}
-<div class="container fade">
+{% else %}
+<div class="container">
     <h2>Budget Chat</h2>
-    <p class="subtitle">Type freely. Write <b>STOP</b> to finish.</p>
 
-    <div class="chat-box" id="chatHistory">
+    <p>
+        Write everything in one sentence.<br>
+        Example: I make $2500, rent is $900, food $300, goal save $400
+    </p>
+
+    <form id="chatForm">
+        <input
+            id="chatInput"
+            placeholder="Type your financial situation here..."
+            required
+        />
+        <button type="submit">Send</button>
+    </form>
+
+    <div class="chat-box" id="chatBox">
         {% for msg in chat %}
-        <div class="msg {{ msg.role }}">
+        <div class="msg">
             <strong>{{ msg.role }}:</strong> {{ msg.content }}
         </div>
         {% endfor %}
     </div>
-
-    <div class="chat-input">
-        <input id="chatInput" placeholder="Type your message…" />
-        <button id="sendBtn">Send</button>
-    </div>
 </div>
 
 <script>
-const box = document.getElementById("chatHistory");
-box.scrollTop = box.scrollHeight;
+document.getElementById("chatForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-document.getElementById("sendBtn").onclick = send;
-document.getElementById("chatInput").addEventListener("keydown", e=>{
-    if(e.key==="Enter") send();
-});
-
-async function send(){
     const input = document.getElementById("chatInput");
-    if(!input.value.trim()) return;
+    const message = input.value;
+    input.value = "";
 
-    const msg = input.value;
-    input.value="";
-
-    box.innerHTML += `<div class="msg user"><strong>You:</strong> ${msg}</div>`;
-    box.scrollTop = box.scrollHeight;
-
-    const res = await fetch("/message",{
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ message: msg })
+    const res = await fetch("/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
     });
-    const data = await res.json();
 
-    if(data.response){
-        box.innerHTML += `<div class="msg assistant fade"><strong>Assistant:</strong> ${data.response}</div>`;
-        box.scrollTop = box.scrollHeight;
-    }
-}
+    const data = await res.json();
+    const box = document.getElementById("chatBox");
+
+    box.innerHTML += `<div class="msg"><strong>You:</strong> ${message}</div>`;
+    box.innerHTML += `<div class="msg"><strong>Assistant:</strong> ${data.response}</div>`;
+    box.scrollTop = box.scrollHeight;
+});
 </script>
 {% endif %}
 

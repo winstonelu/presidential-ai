@@ -3,63 +3,70 @@ import os
 from flask import Flask, request, jsonify, render_template
 from openai import OpenAI
 from dotenv import load_dotenv
+
+# ✅ load .env
 load_dotenv()
 
-#test
 app = Flask(__name__)
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-system_prompt_base = """
-You are a really educated bot that take in the users income and saving goals, in order to use those informations you will ask the user their plan and goals.With the income and the users goal budget/what they will be saving up for you will make a plan for user preferences, even with the customized plan you should ask the user additional information. 
+system_prompt_base = """You are a friendly and educated budgeting assistant.
 
-The format of this plan should be casual so you dont freak out the user, it should start with the dept/+money and the goal and then it should list the biggest income in the spending then you will list the top 5 alternative ways to save money or to lower the spedning on stuff that is not needed. It should provide detailed ways to save up for the budget and the thing the user desires,. it should included guide on how to save up. It should stay in context, please provide short answer at most two paragraph and 5 options for the return format. Please don't add '*' for the section.
+You take the user's income, expenses, and savings goal, then produce a simple and casual budget plan.
+Do NOT ask follow-up questions.
+Give a clear plan in at most two short paragraphs.
 
-the people who will be interacting with the ai will be people who need to keep track of their money and need to be smart in their budget and dont know how to use money wiseley. these people would include children elderly and young adults.
+Format:
+Start with money status (extra money or deficit) and goal.
+Mention biggest spending category.
+List 5 clear ways to save or reduce unnecessary spending.
+
+Audience includes children, young adults, and elderly users.
+No bullet symbols like *.
 """
 
 chat_history = [{"role": "system", "content": system_prompt_base}]
 
+
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", chat=None)
+
 
 @app.route("/start", methods=["POST"])
 def start():
     global chat_history
     chat_history = [{"role": "system", "content": system_prompt_base}]
-    choice = request.json.get("choice")
+    return jsonify({"ok": True})
 
-    if choice == 1:
-        chat_history[0]["content"] += "\nUser wants a step-by-step budget."
-    elif choice == 2:
-        chat_history[0]["content"] += "\nUser wants saving suggestions."
-
-    return jsonify({"session_id": "ok"})
 
 @app.route("/chat")
 def chat():
     return render_template("index.html", chat=chat_history)
 
+
 @app.route("/message", methods=["POST"])
 def message():
     global chat_history
-    user_msg = request.json.get("message")
 
-    if user_msg == "STOP":
-        return jsonify({"response": "Conversation ended. You did great today."})
+    user_prompt = request.json.get("message")
 
-    chat_history.append({"role":"user","content":user_msg})
+    if user_prompt == "STOP":
+        return jsonify({"response": "Session ended. Refresh to start again."})
 
-    res = client.chat.completions.create(
+    chat_history.append({"role": "user", "content": user_prompt})
+
+    response = client.chat.completions.create(
         model="gpt-4o",
         messages=chat_history
     )
 
-    reply = res.choices[0].message.content
-    chat_history.append({"role":"assistant","content":reply})
+    assistant_response = response.choices[0].message.content
+    chat_history.append({"role": "assistant", "content": assistant_response})
 
-    return jsonify({"response": reply})
+    return jsonify({"response": assistant_response})
+
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=80)
+    app.run(debug=True, host='0.0.0.0', port=80)
