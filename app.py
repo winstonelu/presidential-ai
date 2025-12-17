@@ -1,16 +1,20 @@
 # app.py
+import os
 from flask import Flask, request, jsonify, render_template
 from openai import OpenAI
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
 
-client = OpenAI(api_key="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")
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 system_prompt_base = """
-You are a friendly budgeting assistant.
-You give calm, simple financial guidance for beginners.
-Never ask follow-up questions.
-Keep answers short, practical, and reassuring.
+You are a really educated bot that take in the users income and saving goals, in order to use those informations you will ask the user their plan and goals.With the income and the users goal budget/what they will be saving up for you will make a plan for user preferences, even with the customized plan you should ask the user additional information. 
+
+The format of this plan should be casual so you dont freak out the user, it should start with the dept/+money and the goal and then it should list the biggest income in the spending then you will list the top 5 alternative ways to save money or to lower the spedning on stuff that is not needed. It should provide detailed ways to save up for the budget and the thing the user desires,. it should included guide on how to save up. It should stay in context, please provide short answer at most two paragraph and 5 options for the return format. Please don't add '*' for the section.
+
+the people who will be interacting with the ai will be people who need to keep track of their money and need to be smart in their budget and dont know how to use money wiseley. these people would include children elderly and young adults.
 """
 
 chat_history = [{"role": "system", "content": system_prompt_base}]
