@@ -1,28 +1,29 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Personal Budget App</title>
+<title>Budget Assistant</title>
 
 <style>
 :root {
-    --bg: #dbeafe;
+    --bg: #ecfdf5;
     --card-bg: #ffffff;
     --primary: #1e3a8a;
-    --primary-dark: #162d6c;
+    --accent: #16a34a;
     --text-main: #1f2937;
     --text-soft: #6b7280;
     --radius: 14px;
     --shadow: 0 8px 20px rgba(0,0,0,0.07);
 }
+
 body {
-    font-family: Inter, sans-serif;
+    font-family: Inter, Arial, sans-serif;
     background: var(--bg);
     margin: 0;
     padding: 30px;
 }
+
 .container {
     max-width: 650px;
     margin: auto;
@@ -31,12 +32,17 @@ body {
     border-radius: var(--radius);
     box-shadow: var(--shadow);
 }
+
 h2 {
     text-align: center;
+    color: var(--primary);
 }
+
 p {
     color: var(--text-soft);
+    text-align: center;
 }
+
 input {
     width: 100%;
     padding: 12px;
@@ -45,20 +51,19 @@ input {
     border: 1px solid #d7d9df;
     font-size: 15px;
 }
+
 button {
     margin-top: 12px;
     padding: 12px;
     width: 100%;
-    background: var(--primary);
+    background: var(--accent);
     color: white;
     border: none;
     border-radius: var(--radius);
     font-size: 16px;
     cursor: pointer;
 }
-button:hover {
-    background: var(--primary-dark);
-}
+
 .chat-box {
     margin-top: 20px;
     background: #f9fafc;
@@ -68,11 +73,13 @@ button:hover {
     overflow-y: auto;
     border: 1px solid #e5e7eb;
 }
+
 .msg {
     margin-bottom: 10px;
     padding-bottom: 6px;
     border-bottom: 1px solid #e5e7eb;
 }
+
 .msg strong {
     color: var(--primary);
 }
@@ -83,12 +90,12 @@ button:hover {
 
 {% if chat is none %}
 <div class="container">
-    <h2>Personal Budget Assistant</h2>
+    <h2>💵 Budget Assistant</h2>
     <p>
-        This tool helps you understand your money clearly.
-        You will type your income, expenses, and savings goal in one message.
+        Enter your income, expenses, and savings goal to receive
+        a clear financial plan.
     </p>
-    <button id="startBtn">Start</button>
+    <button id="startBtn">Start Budgeting</button>
 </div>
 
 <script>
@@ -100,20 +107,19 @@ document.getElementById("startBtn").onclick = async () => {
 
 {% else %}
 <div class="container">
-    <h2>Budget Chat</h2>
+    <h2>📊 Your Money Plan</h2>
 
     <p>
-        Write everything in one sentence.<br>
-        Example: I make $2500, rent is $900, food $300, goal save $400
+        Example: Income $2500, rent $900, food $300, save $400
     </p>
 
     <form id="chatForm">
         <input
             id="chatInput"
-            placeholder="Type your financial situation here..."
+            placeholder="Describe your financial situation..."
             required
         />
-        <button type="submit">Send</button>
+        <button type="submit">Review My Budget</button>
     </form>
 
     <div class="chat-box" id="chatBox">
@@ -143,7 +149,7 @@ document.getElementById("chatForm").addEventListener("submit", async (e) => {
     const box = document.getElementById("chatBox");
 
     box.innerHTML += `<div class="msg"><strong>You:</strong> ${message}</div>`;
-    box.innerHTML += `<div class="msg"><strong>Assistant:</strong> ${data.response}</div>`;
+    box.innerHTML += `<div class="msg"><strong>Budget Coach:</strong> ${data.response}</div>`;
     box.scrollTop = box.scrollHeight;
 });
 </script>

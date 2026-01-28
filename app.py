@@ -11,38 +11,37 @@ app = Flask(__name__)
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-system_prompt_base = """You are a friendly and educated budgeting assistant.
+system_prompt_base = """You are a friendly financial coach.
 
-You take the user's income, expenses, and savings goal, then produce a simple and casual budget plan.
+You take the user's income, expenses, and savings goal and turn it into a simple budget plan.
 Do NOT ask follow-up questions.
-Give a clear plan in at most two short paragraphs.
+Use clear and friendly money-related language.
 
 Format:
-Start with money status (extra money or deficit) and goal.
-Mention biggest spending category.
+Start with money status (extra money or deficit) and savings goal.
+Mention the biggest spending category.
 List 5 clear ways to save or reduce unnecessary spending.
 
 Audience includes children, young adults, and elderly users.
+Avoid complex financial terms.
 No bullet symbols like *.
 """
 
 chat_history = [{"role": "system", "content": system_prompt_base}]
 
-# =========================
+# ======================
 # ROUTES
-# =========================
+# ======================
 
-# Landing page (NEW ROOT)
+# Landing page
 @app.route("/")
 def landing():
     return render_template("landing.html")
 
-
-# Budget app page
+# Budget app
 @app.route("/app")
 def index():
     return render_template("index.html", chat=None)
-
 
 @app.route("/start", methods=["POST"])
 def start():
@@ -50,11 +49,9 @@ def start():
     chat_history = [{"role": "system", "content": system_prompt_base}]
     return jsonify({"ok": True})
 
-
 @app.route("/chat")
 def chat():
     return render_template("index.html", chat=chat_history)
-
 
 @app.route("/message", methods=["POST"])
 def message():
@@ -76,7 +73,6 @@ def message():
     chat_history.append({"role": "assistant", "content": assistant_response})
 
     return jsonify({"response": assistant_response})
-
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
