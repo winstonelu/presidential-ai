@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify, render_template
 from openai import OpenAI
 from dotenv import load_dotenv
 
-# ✅ load .env
+# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
@@ -28,8 +28,18 @@ No bullet symbols like *.
 
 chat_history = [{"role": "system", "content": system_prompt_base}]
 
+# =========================
+# ROUTES
+# =========================
 
+# Landing page (NEW ROOT)
 @app.route("/")
+def landing():
+    return render_template("landing.html")
+
+
+# Budget app page
+@app.route("/app")
 def index():
     return render_template("index.html", chat=None)
 
@@ -69,4 +79,4 @@ def message():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=3000)
